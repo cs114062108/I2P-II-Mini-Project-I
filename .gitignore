@@ -1,0 +1,8 @@
+# executers
+*.exe
+
+# object folder
+obj/
+
+# object files
+*.o
