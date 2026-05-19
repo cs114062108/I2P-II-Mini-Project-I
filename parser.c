@@ -30,6 +30,8 @@ Symbol getsym(char *str) {
     if (sbcount >= TBLSIZE)
         error(RUNOUT);
     
+    // shoud not be able to access undefined variable, call error() instead
+    error(NOTFOUND);
     strcpy(table[sbcount].name, str);
     table[sbcount].val = 0;
     table[sbcount].pos = sbcount;
@@ -47,6 +49,8 @@ int getval(char *str) {
     if (sbcount >= TBLSIZE)
         error(RUNOUT);
     
+    // shoud not be able to access undefined variable, call error() instead
+    error(NOTFOUND);
     strcpy(table[sbcount].name, str);
     table[sbcount].val = 0;
     table[sbcount].pos = sbcount;
@@ -68,6 +72,7 @@ int setval(char *str, int val) {
     if (sbcount >= TBLSIZE)
         error(RUNOUT);
     
+    // set new value for new variable
     strcpy(table[sbcount].name, str);
     table[sbcount].val = val;
     table[sbcount].pos = sbcount;

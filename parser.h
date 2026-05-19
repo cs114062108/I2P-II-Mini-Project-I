@@ -7,7 +7,7 @@
 // Set PRINTERR to 1 to print error message while calling error()
 // Make sure you set PRINTERR to 0 before you submit your code
 #define PRINTERR 1
-#define TESTMODE 0
+#define TESTMODE 1
 #define SHOWREGISTERS 0
 
 // Call this macro to print error message and exit the program
@@ -20,7 +20,14 @@
 
 // Error types
 typedef enum {
-    UNDEFINED, MISPAREN, NOTNUMID, NOTFOUND, RUNOUT, NOTLVAL, DIVZERO, SYNTAXERR
+    UNDEFINED,
+    MISPAREN,   // mismatched parentheses
+    NOTNUMID,   // not a number or identifier
+    NOTFOUND,   // variable not defined
+    RUNOUT,     // out of memory or registers
+    NOTLVAL,    // lvalue required as an operand
+    DIVZERO,    // divide by constant zero
+    SYNTAXERR
 } ErrorType;
 
 // Structure of the symbol table
