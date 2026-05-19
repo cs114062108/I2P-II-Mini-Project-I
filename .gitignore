@@ -6,3 +6,6 @@ obj/
 
 # object files
 *.o
+
+# merge
+merge.c

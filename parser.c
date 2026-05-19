@@ -10,16 +10,36 @@ Symbol table[TBLSIZE];
 void initTable(void) {
     strcpy(table[0].name, "x");
     table[0].val = 0;
+    table[0].pos = 0;
     strcpy(table[1].name, "y");
     table[1].val = 0;
+    table[1].pos = 1;
     strcpy(table[2].name, "z");
     table[2].val = 0;
+    table[2].pos = 2;
     sbcount = 3;
+}
+
+Symbol getsym(char *str) {
+    int i = 0;
+    
+    for (i = 0; i < sbcount; i++)
+        if (strcmp(str, table[i].name) == 0)
+            return table[i];
+
+    if (sbcount >= TBLSIZE)
+        error(RUNOUT);
+    
+    strcpy(table[sbcount].name, str);
+    table[sbcount].val = 0;
+    table[sbcount].pos = sbcount;
+    //sbcount++;
+    return table[sbcount++];
 }
 
 int getval(char *str) {
     int i = 0;
-
+    
     for (i = 0; i < sbcount; i++)
         if (strcmp(str, table[i].name) == 0)
             return table[i].val;
@@ -29,27 +49,31 @@ int getval(char *str) {
     
     strcpy(table[sbcount].name, str);
     table[sbcount].val = 0;
+    table[sbcount].pos = sbcount;
     sbcount++;
     return 0;
 }
 
 int setval(char *str, int val) {
     int i = 0;
-
+    
     for (i = 0; i < sbcount; i++) {
         if (strcmp(str, table[i].name) == 0) {
             table[i].val = val;
-            return val;
+            //return val;
+            return i;
         }
     }
-
+    
     if (sbcount >= TBLSIZE)
         error(RUNOUT);
     
     strcpy(table[sbcount].name, str);
     table[sbcount].val = val;
+    table[sbcount].pos = sbcount;
     sbcount++;
-    return val;
+    //return val;
+    return i;
 }
 
 BTNode *makeNode(TokenSet tok, const char *lexe) {
@@ -70,6 +94,10 @@ void freeTree(BTNode *root) {
     }
 }
 
+// or_expr := xor_expr or_expr_tail
+// or_expr_tail := OR xor_expr or_expr_tail | NiL
+
+// factor := INT | ID | INCDEC ID | LPAREN assign_expr RPAREN
 // factor := INT | ADDSUB INT |
 //		   	 ID  | ADDSUB ID  | 
 //		   	 ID ASSIGN expr |
@@ -77,13 +105,14 @@ void freeTree(BTNode *root) {
 //		   	 ADDSUB LPAREN expr RPAREN
 BTNode *factor(void) {
     BTNode *retp = NULL, *left = NULL;
-
-    if (match(INT)) {
+    
+    if (match(INT)) { // INT
         retp = makeNode(INT, getLexeme());
         advance();
-    } else if (match(ID)) {
+    } else if (match(ID)) { // ID
         left = makeNode(ID, getLexeme());
         advance();
+        retp = left;
         if (!match(ASSIGN)) {
             retp = left;
         } else {
@@ -106,9 +135,9 @@ BTNode *factor(void) {
             advance();
             retp->right = expr();
             if (match(RPAREN))
-                advance();
+            advance();
             else
-                error(MISPAREN);
+            error(MISPAREN);
         } else {
             error(NOTNUMID);
         }
@@ -116,20 +145,20 @@ BTNode *factor(void) {
         advance();
         retp = expr();
         if (match(RPAREN))
-            advance();
+        advance();
         else
-            error(MISPAREN);
+        error(MISPAREN);
     } else {
         error(NOTNUMID);
     }
     return retp;
 }
 
-// term      := factor term_tail
-// term_tail := MULDIV factor term_tail | NiL
-BTNode *term(void) {
+// muldiv      := factor muldiv_expr_tail
+// muldiv_expr_tail := MULDIV factor muldiv_expr_tail | NiL
+BTNode *muldiv_expr(void) {
     BTNode *retp = NULL, *left = NULL;
-
+    
     retp = left = factor();
     while (match(MULDIV)) {
         retp = makeNode(MULDIV, getLexeme());
@@ -141,41 +170,57 @@ BTNode *term(void) {
     return retp;
 }
 
-// expr      := term expr_tail
-// expr_tail := ADDSUB term expr_tail | NiL
+// addsub_expr      := muldiv_expr addsub_expr_tail
+// addsub_expr_tail := ADDSUB muldiv_expr addsub_expr_tail | NiL
 BTNode *expr(void) {
     BTNode *retp = NULL, *left = NULL;
-
-    retp = left = term();
+    
+    retp = left = muldiv_expr();
     while (match(ADDSUB)) {
         retp = makeNode(ADDSUB, getLexeme());
         advance();
         retp->left = left;
-        retp->right = term();
+        retp->right = muldiv_expr();
         left = retp;
     }
     return retp;
 }
 
+// assign_expr := ID ASSIGN assign_expr | ID ADDSUB_ASSIGN assign_expr | or_expr 
+BTNode *assign_expr(void) {
+    BTNode *retp = NULL;
+    return retp;
+}
 
+// statement := ENDFILE | END | assign_expr END
 // statement := ENDFILE | END | expr END
 void statement(void) {
     BTNode *retp = NULL;
-
+    
     if (match(ENDFILE)) {
+        printf("EXIT 0\n");
         exit(0);
     } else if (match(END)) {
-        printf(">> ");
+        if (TESTMODE) printf(">> ");
         advance();
     } else {
         retp = expr();
         if (match(END)) {
-            printf("%d\n", evaluateTree(retp));
-            printf("Prefix traversal: ");
-            printPrefix(retp);
-            printf("\n");
+            if (TESTMODE) {
+                printf("%d\n", evaluateTree(retp));
+            } else {
+                evaluateTree(retp);
+            }
+            if (TESTMODE) printf("Prefix traversal: ");
+            if (TESTMODE) printPrefix(retp);
+            if (TESTMODE) printf("\n");
             freeTree(retp);
-            printf(">> ");
+            if (TESTMODE && SHOWREGISTERS) {
+                for (int i = 0; i < RMAX; i++) {
+                    printf("r[%d] = %d\n", i, registers[i]);
+                }
+            }
+            if (TESTMODE) printf(">> ");
             advance();
         } else {
             error(SYNTAXERR);
@@ -213,5 +258,6 @@ void err(ErrorType errorNum) {
                 break;
         }
     }
+    printf("EXIT 1\n");
     exit(0);
 }

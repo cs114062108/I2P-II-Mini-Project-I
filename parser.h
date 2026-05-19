@@ -7,6 +7,8 @@
 // Set PRINTERR to 1 to print error message while calling error()
 // Make sure you set PRINTERR to 0 before you submit your code
 #define PRINTERR 1
+#define TESTMODE 0
+#define SHOWREGISTERS 0
 
 // Call this macro to print error message and exit the program
 // This will also print where you called it in your program
@@ -22,9 +24,10 @@ typedef enum {
 } ErrorType;
 
 // Structure of the symbol table
-typedef struct {
+typedef struct _Symbol {
     int val;
     char name[MAXLEN];
+    int pos;
 } Symbol;
 
 // Structure of a tree node
@@ -42,10 +45,13 @@ extern Symbol table[TBLSIZE];
 // Initialize the symbol table with builtin variables
 extern void initTable(void);
 
+// Get the symbol object of a variable
+extern Symbol getsym(char *str);
+
 // Get the value of a variable
 extern int getval(char *str);
 
-// Set the value of a variable
+// Set the value of a variable, and return its position
 extern int setval(char *str, int val);
 
 // Make a new node according to token type and lexeme
@@ -55,8 +61,8 @@ extern BTNode *makeNode(TokenSet tok, const char *lexe);
 extern void freeTree(BTNode *root);
 
 extern BTNode *factor(void);
-extern BTNode *term(void);
-extern BTNode *expr(void);
+extern BTNode *muldiv_expr(void); // muldiv
+extern BTNode *expr(void); // addsub
 extern void statement(void);
 
 // Print error message and exit the program
