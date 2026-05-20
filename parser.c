@@ -99,8 +99,6 @@ void freeTree(BTNode *root) {
     }
 }
 
-// or_expr := xor_expr or_expr_tail
-// or_expr_tail := OR xor_expr or_expr_tail | NiL
 
 // factor := INT | ID | INCDEC ID | LPAREN assign_expr RPAREN
 // factor := INT | ADDSUB INT |
@@ -112,9 +110,11 @@ BTNode *factor(void) {
     BTNode *retp = NULL, *left = NULL;
     
     if (match(INT)) { // INT
+        //if (TESTMODE) printf("INT ");
         retp = makeNode(INT, getLexeme());
         advance();
     } else if (match(ID)) { // ID
+        //if (TESTMODE) printf("ID ");
         left = makeNode(ID, getLexeme());
         advance();
         retp = left;
@@ -124,76 +124,147 @@ BTNode *factor(void) {
             retp = makeNode(ASSIGN, getLexeme());
             advance();
             retp->left = left;
-            retp->right = expr();
+            retp->right = addsub_expr();
         }
-    } else if (match(ADDSUB)) {
-        retp = makeNode(ADDSUB, getLexeme());
-        retp->left = makeNode(INT, "0");
+    } else if (match(INCDEC)) { // INCDEC ID
+        //if (TESTMODE) printf("INCDEC ");
+        left = makeNode(ID, getLexeme());
         advance();
-        if (match(INT)) {
-            retp->right = makeNode(INT, getLexeme());
-            advance();
-        } else if (match(ID)) {
-            retp->right = makeNode(ID, getLexeme());
-            advance();
-        } else if (match(LPAREN)) {
-            advance();
-            retp->right = expr();
-            if (match(RPAREN))
-            advance();
-            else
-            error(MISPAREN);
-        } else {
-            error(NOTNUMID);
-        }
-    } else if (match(LPAREN)) {
+        retp = makeNode(INCDEC, getLexeme());
+        retp->left = left;
+    } else if (match(LPAREN)) { // LPAREN assign_expr RPAREN
         advance();
-        retp = expr();
+        //retp = addsub_expr();
+        retp = assign_expr();
         if (match(RPAREN))
-        advance();
+            advance();
         else
-        error(MISPAREN);
+            error(MISPAREN);
     } else {
         error(NOTNUMID);
     }
     return retp;
 }
 
-// muldiv      := factor muldiv_expr_tail
+// muldiv           := factor muldiv_expr_tail
 // muldiv_expr_tail := MULDIV factor muldiv_expr_tail | NiL
 BTNode *muldiv_expr(void) {
     BTNode *retp = NULL, *left = NULL;
-    
+    if (TESTMODE && SHOWEXPR) printf("muldiv( ");
     retp = left = factor();
     while (match(MULDIV)) {
+        //if (TESTMODE) printf("MULDIV ");
         retp = makeNode(MULDIV, getLexeme());
         advance();
         retp->left = left;
         retp->right = factor();
         left = retp;
     }
+    if (TESTMODE && SHOWEXPR) printf(") ");
     return retp;
 }
 
 // addsub_expr      := muldiv_expr addsub_expr_tail
 // addsub_expr_tail := ADDSUB muldiv_expr addsub_expr_tail | NiL
-BTNode *expr(void) {
+BTNode *addsub_expr(void) {
     BTNode *retp = NULL, *left = NULL;
-    
+    if (TESTMODE && SHOWEXPR) printf("addsub( ");
     retp = left = muldiv_expr();
     while (match(ADDSUB)) {
+        //if (TESTMODE) printf("ADDSUB ");
         retp = makeNode(ADDSUB, getLexeme());
         advance();
         retp->left = left;
         retp->right = muldiv_expr();
         left = retp;
     }
+    if (TESTMODE && SHOWEXPR) printf(") ");
+    return retp;
+}
+
+// and_expr            := addsub_expr and_expr_tail
+// and_expr_tail       := AND addsub_expr and_expr_tail | NiL
+BTNode *and_expr(void) {
+    BTNode *retp = NULL, *left = NULL;
+    if (TESTMODE && SHOWEXPR) printf("and( ");
+    retp = left = addsub_expr();
+    while (match(AND)) {
+        //if (TESTMODE) printf("AND ");
+        retp = makeNode(AND, getLexeme());
+        advance();
+        retp->left = left;
+        retp->right = addsub_expr();
+        left = retp;
+    }
+    if (TESTMODE && SHOWEXPR) printf(") ");
+    return retp;
+}
+
+// xor_expr            := and_expr xor_expr_tail
+// xor_expr_tail       := XOR and_expr xor_expr_tail | NiL
+BTNode *xor_expr(void) {
+    BTNode *retp = NULL, *left = NULL;
+    if (TESTMODE && SHOWEXPR) printf("xor( ");
+    retp = left = and_expr();
+    while (match(XOR)) {
+        //if (TESTMODE) printf("XOR ");
+        retp = makeNode(XOR, getLexeme());
+        advance();
+        retp->left = left;
+        retp->right = and_expr();
+        left = retp;
+    }
+    if (TESTMODE && SHOWEXPR) printf(") ");
+    return retp;
+}
+
+// or_expr             := xor_expr or_expr_tail
+// or_expr_tail        := OR xor_expr or_expr_tail | NiL
+BTNode *or_expr(void) {
+    BTNode *retp = NULL, *left = NULL;
+    if (TESTMODE && SHOWEXPR) printf("or( ");
+    retp = left = xor_expr();
+    while (match(OR)) {
+        //if (TESTMODE) printf("OR ");
+        retp = makeNode(OR, getLexeme());
+        advance();
+        retp->left = left;
+        retp->right = xor_expr();
+        left = retp;
+    }
+    if (TESTMODE && SHOWEXPR) printf(") ");
     return retp;
 }
 
 // assign_expr := ID ASSIGN assign_expr | ID ADDSUB_ASSIGN assign_expr | or_expr 
 BTNode *assign_expr(void) {
-    BTNode *retp = NULL;
+    BTNode *retp = NULL, *left = NULL;
+
+    TokenSet nextToken = peekNextToken();
+
+    if (match(ID) && (nextToken == ASSIGN || nextToken == ADDSUB_ASSIGN)) {
+        //if (TESTMODE) printf("ID ");
+        left = makeNode(ID, getLexeme());
+        advance();
+        retp = left;
+        if (match(ASSIGN)) {
+            //if (TESTMODE) printf("ASSIGN ");
+            retp = makeNode(ASSIGN, getLexeme());
+            advance();
+            retp->left = left;
+            retp->right = assign_expr();
+            //retp->right = or_expr();
+        } else if (match(ADDSUB_ASSIGN)) {
+            //if (TESTMODE) printf("ADDSUB_ASSIGN ");
+            retp = makeNode(ADDSUB_ASSIGN, getLexeme());
+            advance();
+            retp->left = left;
+            retp->right = assign_expr();
+            //retp->right = or_expr();
+        }
+    } else {
+        retp = left = or_expr();
+    }
     return retp;
 }
 
@@ -209,8 +280,11 @@ void statement(void) {
         if (TESTMODE) printf(">> ");
         advance();
     } else {
-        retp = expr();
+        //retp = addsub_expr();
+        retp = assign_expr();
         if (match(END)) {
+            reset_r_index(); // reset register index for each statement
+            if (TESTMODE) printf("\n");
             if (TESTMODE) {
                 printf("%d\n", evaluateTree(retp));
             } else {

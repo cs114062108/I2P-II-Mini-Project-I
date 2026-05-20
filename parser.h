@@ -4,12 +4,6 @@
 #include "lex.h"
 #define TBLSIZE 64
 
-// Set PRINTERR to 1 to print error message while calling error()
-// Make sure you set PRINTERR to 0 before you submit your code
-#define PRINTERR 1
-#define TESTMODE 1
-#define SHOWREGISTERS 0
-
 // Call this macro to print error message and exit the program
 // This will also print where you called it in your program
 #define error(errorNum) { \
@@ -67,10 +61,31 @@ extern BTNode *makeNode(TokenSet tok, const char *lexe);
 // Free the syntax tree
 extern void freeTree(BTNode *root);
 
-extern BTNode *factor(void);
-extern BTNode *muldiv_expr(void); // muldiv
-extern BTNode *expr(void); // addsub
+/* EXPRESSION PARSING */
+/*
+statement           := ENDFILE | END | assign_expr END
+assign_expr         := ID ASSIGN assign_expr | ID ADDSUB_ASSIGN assign_expr | or_expr
+or_expr             := xor_expr or_expr_tail
+or_expr_tail        := OR xor_expr or_expr_tail | NiL
+xor_expr            := and_expr xor_expr_tail
+xor_expr_tail       := XOR and_expr xor_expr_tail | NiL
+and_expr            := addsub_expr and_expr_tail
+and_expr_tail       := AND addsub_expr and_expr_tail | NiL
+addsub_expr         := muldiv_expr addsub_expr_tail
+addsub_expr_tail    := ADDSUB muldiv_expr addsub_expr_tail | NiL
+muldiv_expr         := unary_expr muldiv_expr_tail
+muldiv_expr_tail    := MULDIV unary_expr muldiv_expr_tail | NiL
+unary_expr          := ADDSUB unary_expr | factor
+factor              := INT | ID | INCDEC ID | LPAREN assign_expr RPAREN
+*/
 extern void statement(void);
+extern BTNode *assign_expr(void);   // assign
+extern BTNode *or_expr(void);       // or
+extern BTNode *xor_expr(void);      // xor
+extern BTNode *and_expr(void);      // and
+extern BTNode *addsub_expr(void);   // addsub
+extern BTNode *muldiv_expr(void);   // muldiv
+extern BTNode *factor(void);        // factor
 
 // Print error message and exit the program
 extern void err(ErrorType errorNum);
