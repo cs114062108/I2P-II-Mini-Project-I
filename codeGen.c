@@ -56,6 +56,35 @@ int evaluateTree(BTNode *root) {
                 return_index = setRegister(retval);
                 printf("%d\n", retval);
                 break;
+            case INCDEC: // New: ++ or -- (unary)
+                // id part
+                sym = getsym(root->left->lexeme);
+                lv = sym.val;
+                lmpos = sym.pos;
+                lridx = setRegister(lv);
+                printf("[%d]", pos_to_memory(lmpos));
+                if (TESTMODE) printf("\t(%s) ", root->left->lexeme);
+                printf("\n");
+                // addsub part
+                rridx = setRegister(1); printf("1\n");
+                if (strcmp(root->lexeme, "++") == 0) {
+                    lv += 1;
+                    printf("ADD ");
+                } else if (strcmp(root->lexeme, "--") == 0) {
+                    lv -= 1;
+                    printf("SUB ");
+                }
+                return_index = operRegister(lridx, rridx, lv);
+                printf("r%d r%d\n", lridx, rridx);
+                // assign part
+                rridx = return_index;
+                lmpos = setval(root->left->lexeme, lv);
+                retval = lv;
+                printf("MOV [%d] ", pos_to_memory(lmpos));
+                printf("r%d", rridx);
+                if (TESTMODE) printf("\t(%s)", root->left->lexeme);
+                printf("\n");
+                break;
             case ASSIGN:
                 rv = evaluateTree(root->right);
                 rridx = return_index;

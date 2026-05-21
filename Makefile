@@ -1,7 +1,7 @@
 CC = gcc
 WFlags = -Wall
 
-TARGETS = main
+TARGETS = main merge
 
 # Define the path between the original file and the corresponding target object file
 OBJDIR = obj
@@ -9,6 +9,9 @@ SRCS = main.c lex.c parser.c codeGen.c
 OBJ = $(patsubst %.c, $(OBJDIR)/%.o, $(SRCS))
 
 all: $(TARGETS)
+
+merge: merge.c
+	$(CC) $(WFlags) $^ -o $@
 
 # Use the object file under OBJDIR when linking
 main: $(OBJ)

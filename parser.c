@@ -108,7 +108,7 @@ void freeTree(BTNode *root) {
 //		   	 ADDSUB LPAREN expr RPAREN
 BTNode *factor(void) {
     BTNode *retp = NULL, *left = NULL;
-    
+    if (TESTMODE) printf("factor( ");
     if (match(INT)) { // INT
         //if (TESTMODE) printf("INT ");
         retp = makeNode(INT, getLexeme());
@@ -118,31 +118,29 @@ BTNode *factor(void) {
         left = makeNode(ID, getLexeme());
         advance();
         retp = left;
-        if (!match(ASSIGN)) {
-            retp = left;
-        } else {
-            retp = makeNode(ASSIGN, getLexeme());
-            advance();
-            retp->left = left;
-            retp->right = addsub_expr();
-        }
     } else if (match(INCDEC)) { // INCDEC ID
         //if (TESTMODE) printf("INCDEC ");
+        retp = makeNode(INCDEC, getLexeme());
+        advance();
         left = makeNode(ID, getLexeme());
         advance();
-        retp = makeNode(INCDEC, getLexeme());
         retp->left = left;
     } else if (match(LPAREN)) { // LPAREN assign_expr RPAREN
+        if (TESTMODE) printf("factorLP ");
         advance();
         //retp = addsub_expr();
         retp = assign_expr();
-        if (match(RPAREN))
+        if (match(RPAREN)) {
+            if (TESTMODE) printf("factorRP ");
             advance();
-        else
+        } else {
+            if (TESTMODE) printf("factorOHNO ");
             error(MISPAREN);
+        }
     } else {
         error(NOTNUMID);
     }
+    if (TESTMODE) printf(") ");
     return retp;
 }
 
@@ -241,7 +239,7 @@ BTNode *assign_expr(void) {
     BTNode *retp = NULL, *left = NULL;
 
     TokenSet nextToken = peekNextToken();
-
+    if (TESTMODE) printf("assign( ");
     if (match(ID) && (nextToken == ASSIGN || nextToken == ADDSUB_ASSIGN)) {
         //if (TESTMODE) printf("ID ");
         left = makeNode(ID, getLexeme());
@@ -265,6 +263,7 @@ BTNode *assign_expr(void) {
     } else {
         retp = left = or_expr();
     }
+    if (TESTMODE) printf(") ");
     return retp;
 }
 
@@ -286,7 +285,7 @@ void statement(void) {
             reset_r_index(); // reset register index for each statement
             if (TESTMODE) printf("\n");
             if (TESTMODE) {
-                printf("%d\n", evaluateTree(retp));
+                printf("Result: %d\n", evaluateTree(retp));
             } else {
                 evaluateTree(retp);
             }
