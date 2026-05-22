@@ -144,18 +144,34 @@ BTNode *factor(void) {
     return retp;
 }
 
-// muldiv           := factor muldiv_expr_tail
-// muldiv_expr_tail := MULDIV factor muldiv_expr_tail | NiL
+// unary_expr   := ADDSUB unary_expr | factor
+BTNode *unary_expr(void) {
+    BTNode *retp = NULL;
+    if (TESTMODE && SHOWEXPR) printf("unary( ");
+    if (match(ADDSUB)) {
+        //if (TESTMODE) printf("ADDSUB ");
+        retp = makeNode(ADDSUB, getLexeme());
+        advance();
+        retp->left = unary_expr();
+    } else {
+        retp = factor();
+    }
+    if (TESTMODE && SHOWEXPR) printf(") ");
+    return retp;
+}
+
+//muldiv_expr         := unary_expr muldiv_expr_tail
+//muldiv_expr_tail    := MULDIV unary_expr muldiv_expr_tail | NiL
 BTNode *muldiv_expr(void) {
     BTNode *retp = NULL, *left = NULL;
     if (TESTMODE && SHOWEXPR) printf("muldiv( ");
-    retp = left = factor();
+    retp = left = unary_expr();
     while (match(MULDIV)) {
         //if (TESTMODE) printf("MULDIV ");
         retp = makeNode(MULDIV, getLexeme());
         advance();
         retp->left = left;
-        retp->right = factor();
+        retp->right = unary_expr();
         left = retp;
     }
     if (TESTMODE && SHOWEXPR) printf(") ");
@@ -273,6 +289,9 @@ void statement(void) {
     BTNode *retp = NULL;
     
     if (match(ENDFILE)) {
+        for (int i = 0; i < 3; i++) {
+            printf("MOV r%d [%d]\n", i, 4*i);
+        }
         printf("EXIT 0\n");
         exit(0);
     } else if (match(END)) {

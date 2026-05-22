@@ -53,7 +53,7 @@ TokenSet getToken(void) {
         lexeme[i] = '\0';
         if (TESTMODE) printf("INT ");
         return INT;
-    } else if (isalpha(c)) { // ID: read variable name with more than one letter or has numbers or underscores
+    } else if (isalpha(c) || c == '_') { // ID: read variable name with more than one letter or has numbers or underscores
         lexeme[0] = c;
         c = fgetc(stdin);
         i = 1;

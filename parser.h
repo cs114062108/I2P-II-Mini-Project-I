@@ -85,6 +85,7 @@ extern BTNode *xor_expr(void);      // xor
 extern BTNode *and_expr(void);      // and
 extern BTNode *addsub_expr(void);   // addsub
 extern BTNode *muldiv_expr(void);   // muldiv
+extern BTNode *unary_expr(void);    // unary
 extern BTNode *factor(void);        // factor
 
 // Print error message and exit the program

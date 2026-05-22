@@ -8,7 +8,7 @@ obj/
 *.o
 
 # merge
-merge.c
+#merge.c
 
 # real parse
 real_parse/

@@ -1,12 +1,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include "codeGen.h"
 
 /* Registers */
 int registers[RMAX];
 static int r_index = 0; // next index of registers to use
 static int return_index = -1;
+
+// all int no ID as value in the tree
+bool all_int(BTNode *root) {
+    if (root == NULL) return true;
+    if (root->data == ID) return false;
+    return all_int(root->left) && all_int(root->right);
+}
 
 void reset_r_index() {
     r_index = 0;
@@ -141,9 +149,14 @@ int evaluateTree(BTNode *root) {
                     retval = lv * rv;
                     printf("MUL ");
                 } else if (strcmp(root->lexeme, "/") == 0) {
-                    if (rv == 0)
-                    error(DIVZERO);
-                    retval = lv / rv;
+                    if (rv == 0 && all_int(root->right)) { // exit with error if divide by zero only when the right subtree is all integer
+                        error(DIVZERO);
+                    }
+                    if (rv == 0) { // if divide by zero but the right node is not an integer, just set retval to 0 without exit
+                        retval = 0;
+                    } else {
+                        retval = lv / rv;
+                    }
                     printf("DIV ");
                 } else if (strcmp(root->lexeme, "&") == 0) { // New: AND
                     retval = lv & rv;
