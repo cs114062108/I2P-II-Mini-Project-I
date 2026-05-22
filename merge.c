@@ -454,7 +454,8 @@ BTNode *unary_expr(void) {
         //if (TESTMODE) printf("ADDSUB ");
         retp = makeNode(ADDSUB, getLexeme());
         advance();
-        retp->left = unary_expr();
+        retp->left = makeNode(INT, "0"); // treat unary + or - as binary with left operand 0
+        retp->right = unary_expr();
     } else {
         retp = factor();
     }

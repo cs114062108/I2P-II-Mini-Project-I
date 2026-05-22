@@ -47,7 +47,7 @@ int evaluateTree(BTNode *root) {
     int lridx = 0, rridx = 0; // register index for left and right value
     int lmpos = 0, rmpos = 0; // memory position
     Symbol sym;
-
+    
     if (root != NULL) {
         return_index = -1;
         switch (root->data) {
